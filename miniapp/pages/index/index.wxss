@@ -1,0 +1,221 @@
+/**
+ * 首页样式
+ * 暖色调餐饮主题
+ */
+
+.page-index {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  padding-bottom: 20rpx;
+}
+
+/* ===== 搜索栏 ===== */
+.search-bar {
+  padding: 16rpx 24rpx;
+  background-color: #FFFFFF;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.search-input-box {
+  display: flex;
+  align-items: center;
+  background-color: #F5F5F5;
+  border-radius: 36rpx;
+  padding: 12rpx 24rpx;
+}
+
+.search-icon {
+  font-size: 28rpx;
+  margin-right: 12rpx;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: var(--color-text);
+}
+
+.search-clear {
+  font-size: 24rpx;
+  color: var(--color-text-light);
+  padding: 4rpx 12rpx;
+}
+
+/* ===== Banner 轮播 ===== */
+.banner-swiper {
+  width: 100%;
+  height: 280rpx;
+  margin-bottom: 8rpx;
+}
+
+.banner-slide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 48rpx;
+  margin: 16rpx 24rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.banner-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.banner-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 12rpx;
+}
+
+.banner-desc {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.banner-emoji {
+  font-size: 100rpx;
+}
+
+/* ===== 分类 Tab ===== */
+.category-tabs {
+  white-space: nowrap;
+  padding: 16rpx 24rpx;
+  background-color: #FFFFFF;
+  margin-bottom: 8rpx;
+}
+
+.category-tab {
+  display: inline-block;
+  padding: 12rpx 28rpx;
+  margin-right: 16rpx;
+  font-size: 26rpx;
+  color: var(--color-text-secondary);
+  background-color: #F5F5F5;
+  border-radius: 32rpx;
+  transition: all 0.2s;
+}
+
+.category-tab--active {
+  color: #FFFFFF;
+  background-color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ===== 菜品网格 ===== */
+.dish-scroll {
+  height: calc(100vh - 520rpx);
+}
+
+.dish-grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 8rpx 16rpx;
+}
+
+.dish-card {
+  width: calc(50% - 16rpx);
+  margin: 8rpx;
+  background-color: var(--color-card);
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  transition: transform 0.15s;
+}
+
+.dish-card:active {
+  transform: scale(0.97);
+}
+
+.dish-card__image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 220rpx;
+  overflow: hidden;
+}
+
+.dish-card__image {
+  width: 100%;
+  height: 100%;
+  background-color: #F0F0F0;
+}
+
+.dish-card__category-tag {
+  position: absolute;
+  top: 12rpx;
+  left: 12rpx;
+  background-color: rgba(255, 107, 53, 0.85);
+  color: #FFFFFF;
+  font-size: 20rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 8rpx;
+}
+
+.dish-card__info {
+  padding: 16rpx;
+}
+
+.dish-card__name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--color-text);
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.dish-card__footer {
+  width: 100%;
+}
+
+.dish-card__price {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.dish-card__stall {
+  font-size: 22rpx;
+  color: var(--color-text-light);
+  max-width: 120rpx;
+}
+
+/* ===== 骨架屏 ===== */
+.dish-card--skeleton {
+  pointer-events: none;
+}
+
+.skeleton-bg {
+  background: linear-gradient(90deg, #F0F0F0 25%, #E8E8E8 50%, #F0F0F0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  height: 220rpx;
+}
+
+.skeleton-line {
+  height: 24rpx;
+  background: linear-gradient(90deg, #F0F0F0 25%, #E8E8E8 50%, #F0F0F0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 6rpx;
+  margin-bottom: 12rpx;
+}
+
+.skeleton-line--long {
+  width: 80%;
+  height: 30rpx;
+}
+
+.skeleton-line--short {
+  width: 50%;
+  height: 24rpx;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

@@ -1,0 +1,42 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/random/random",
+    "pages/guess-like/guess-like",
+    "pages/today-praise/today-praise",
+    "pages/dish-detail/dish-detail"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FF6B35",
+    "navigationBarTitleText": "美食推荐",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#F5F5F5"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#FF6B35",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/random/random",
+        "text": "随机选餐"
+      },
+      {
+        "pagePath": "pages/guess-like/guess-like",
+        "text": "猜你喜欢"
+      },
+      {
+        "pagePath": "pages/today-praise/today-praise",
+        "text": "好评榜"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

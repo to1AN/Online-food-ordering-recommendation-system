@@ -1,0 +1,85 @@
+<!--
+  今日好评榜 — 今日评分≥4分的菜品TOP10
+  成员B：选餐与个性化推荐模块
+-->
+<view class="page-praise">
+
+  <!-- ===== 页面头部 ===== -->
+  <view class="praise-header">
+    <text class="praise-header__title">🏆 今日好评榜</text>
+    <text class="praise-header__desc">今日评分 ≥ 4分 · 按均分降序</text>
+  </view>
+
+  <!-- ===== 加载中 ===== -->
+  <view class="praise-skeleton" wx:if="{{loading}}">
+    <view class="praise-skeleton-item" wx:for="{{[1,2,3,4,5]}}" wx:key="index">
+      <view class="skeleton-line skeleton-rank"></view>
+      <view class="skeleton-line skeleton-img"></view>
+      <view class="skeleton-info">
+        <view class="skeleton-line skeleton-name"></view>
+        <view class="skeleton-line skeleton-score"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 排行榜列表 ===== -->
+  <view class="praise-list" wx:if="{{!loading && list.length > 0}}">
+    <view
+      class="praise-item"
+      wx:for="{{list}}"
+      wx:key="dish_id"
+      data-dish="{{item}}"
+      bindtap="onItemTap"
+    >
+      <!-- 排名徽章 -->
+      <view class="praise-item__rank">
+        <!-- 前3名：金银铜徽章 -->
+        <text class="rank-medal rank-medal--{{index + 1}}" wx:if="{{index < 3}}">
+          {{index === 0 ? '🥇' : (index === 1 ? '🥈' : '🥉')}}
+        </text>
+        <!-- 4~10名：数字 -->
+        <text class="rank-number" wx:else>{{index + 1}}</text>
+      </view>
+
+      <!-- 菜品图片 -->
+      <image
+        class="praise-item__image"
+        src="{{item.image_url}}"
+        mode="aspectFill"
+        lazy-load
+      />
+
+      <!-- 菜品信息 -->
+      <view class="praise-item__info flex-1">
+        <text class="praise-item__name text-ellipsis">{{item.dish_name}}</text>
+        <text class="praise-item__category text-sm text-light">{{item.category || '美食'}}</text>
+        <view class="flex-row mt-16">
+          <text class="praise-item__price">¥{{item.price}}</text>
+          <text class="praise-item__count text-sm text-light ml-16">{{item.praise_count}}人好评</text>
+        </view>
+      </view>
+
+      <!-- 评分 -->
+      <view class="praise-item__score">
+        <text class="score-value">{{item.avg_score}}</text>
+        <text class="score-label">分</text>
+        <!-- 简易星级 -->
+        <view class="star-row">
+          <text
+            class="star-item"
+            wx:for="{{[1,2,3,4,5]}}"
+            wx:key="index"
+          >{{item.avg_score >= (index + 1) ? '★' : (item.avg_score >= (index + 0.5) ? '☆' : '☆')}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 空状态 ===== -->
+  <view class="empty-state" wx:if="{{!loading && list.length === 0}}">
+    <text class="empty-icon">📊</text>
+    <text class="empty-text">暂无好评数据</text>
+    <text class="empty-text text-sm" style="margin-top: 8rpx;">快去给菜品评分吧</text>
+  </view>
+
+</view>

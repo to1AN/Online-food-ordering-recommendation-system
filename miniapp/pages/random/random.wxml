@@ -1,0 +1,128 @@
+<!--
+  随机选餐 — 跑马灯效果
+  成员B：选餐与个性化推荐模块 · 核心功能
+-->
+<view class="page-random">
+
+  <!-- ===== 页面头部 ===== -->
+  <view class="random-header">
+    <text class="random-header__title">🎰 随机选餐</text>
+    <text class="random-header__desc">让命运决定今天吃什么！</text>
+  </view>
+
+  <!-- ===== 跑马灯主体区域 ===== -->
+  <view class="marquee-stage">
+
+    <!-- 装饰灯带 -->
+    <view class="stage-decoration">
+      <view class="light-dot" wx:for="{{[1,2,3,4,5,6,7,8,9,10]}}" wx:key="index"></view>
+    </view>
+
+    <!-- 跑马灯卡片区域 -->
+    <view class="marquee-card {{isRunning ? 'marquee-card--running' : ''}} {{result ? 'marquee-card--stopped' : ''}}">
+      <!-- 未开始状态 -->
+      <view class="marquee-idle" wx:if="{{!isRunning && !result && !poolLoading}}">
+        <text class="idle-emoji">🍜</text>
+        <text class="idle-text">点击下方按钮</text>
+        <text class="idle-text">开启随机选餐</text>
+      </view>
+
+      <!-- 菜品池加载中 -->
+      <view class="marquee-idle" wx:if="{{poolLoading}}">
+        <text class="idle-emoji">⏳</text>
+        <text class="idle-text">正在准备菜品...</text>
+      </view>
+
+      <!-- 跑马灯运行中 / 结果展示 -->
+      <block wx:if="{{isRunning || result}}">
+        <view class="marquee-dish {{isRunning ? 'marquee-dish--rolling' : ''}}">
+          <!-- 菜品图片 -->
+          <image
+            class="marquee-dish__image"
+            src="{{currentDish.image_url}}"
+            mode="aspectFill"
+          />
+          <!-- 菜品信息 -->
+          <view class="marquee-dish__info">
+            <text class="marquee-dish__name">{{currentDish.dish_name}}</text>
+            <text class="marquee-dish__category">{{currentDish.category || '美食'}}</text>
+            <text class="marquee-dish__price">¥{{currentDish.price}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- 停止后的遮罩动画 -->
+      <view class="marquee-result-mask" wx:if="{{result}}">
+        <text class="result-emoji">🎉</text>
+        <text class="result-label">就决定是你了！</text>
+      </view>
+    </view>
+
+    <!-- 速度指示器 -->
+    <view class="speed-indicator" wx:if="{{isRunning}}">
+      <text class="speed-dot speed-dot--fast"></text>
+      <text class="speed-dot speed-dot--fast"></text>
+      <text class="speed-dot speed-dot--fast"></text>
+      <text class="speed-text">滚动中...</text>
+    </view>
+
+  </view>
+
+  <!-- ===== 操作按钮区 ===== -->
+  <view class="marquee-controls">
+
+    <!-- 未开始：显示"开始"按钮 -->
+    <button
+      class="ctrl-btn ctrl-btn--start"
+      wx:if="{{!isRunning && !result}}"
+      bindtap="onStart"
+      disabled="{{poolLoading || poolEmpty}}"
+    >
+      <text class="ctrl-btn__icon">🎲</text>
+      <text class="ctrl-btn__text">开始</text>
+    </button>
+
+    <!-- 运行中：显示"停止"按钮 -->
+    <button
+      class="ctrl-btn ctrl-btn--stop"
+      wx:if="{{isRunning}}"
+      bindtap="onStop"
+    >
+      <text class="ctrl-btn__icon">✋</text>
+      <text class="ctrl-btn__text">停！</text>
+    </button>
+
+    <!-- 结果出炉：两个按钮 -->
+    <view class="ctrl-result-actions" wx:if="{{result}}">
+      <button class="ctrl-btn ctrl-btn--confirm" bindtap="onConfirm">
+        <text class="ctrl-btn__icon">🍽️</text>
+        <text class="ctrl-btn__text">就吃这个</text>
+      </button>
+      <button class="ctrl-btn ctrl-btn--retry" bindtap="onRetry">
+        <text class="ctrl-btn__icon">🔄</text>
+        <text class="ctrl-btn__text">再选一次</text>
+      </button>
+    </view>
+
+  </view>
+
+  <!-- ===== 菜品池状态提示 ===== -->
+  <view class="pool-status" wx:if="{{poolEmpty && !poolLoading}}">
+    <text class="empty-text text-light">暂无菜品数据，请确认后端服务已启动</text>
+  </view>
+
+  <!-- ===== 确认成功弹窗 ===== -->
+  <view class="confirm-overlay" wx:if="{{showConfirm}}" bindtap="onCloseConfirm">
+    <view class="confirm-card" catchtap="">
+      <text class="confirm-emoji">✅</text>
+      <text class="confirm-title">已记录选餐</text>
+      <text class="confirm-dish">{{result.dish_name}}</text>
+      <text class="confirm-hint">¥{{result.price}} · {{result.category || '美食'}}</text>
+      <view class="confirm-btns flex-row">
+        <button class="btn-outline flex-1" bindtap="onViewDetail">查看详情</button>
+        <button class="btn-primary flex-1 ml-16" bindtap="onCloseConfirm">好的</button>
+      </view>
+    </view>
+  </view>
+
+</view>

@@ -1,0 +1,124 @@
+<!--
+  首页 — 菜品浏览 + 推荐入口
+  成员B：选餐与个性化推荐模块
+-->
+<view class="page-index">
+
+  <!-- ===== 顶部搜索栏 ===== -->
+  <view class="search-bar">
+    <view class="search-input-box">
+      <text class="search-icon">🔍</text>
+      <input
+        class="search-input"
+        placeholder="搜索菜品名称..."
+        value="{{keyword}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearchConfirm"
+        confirm-type="search"
+      />
+      <text class="search-clear" wx:if="{{keyword}}" bindtap="onClearSearch">✕</text>
+    </view>
+  </view>
+
+  <!-- ===== Banner 轮播 ===== -->
+  <swiper
+    class="banner-swiper"
+    indicator-dots
+    indicator-color="rgba(255,255,255,0.5)"
+    indicator-active-color="#FF6B35"
+    autoplay
+    circular
+    interval="3000"
+    duration="500"
+  >
+    <swiper-item wx:for="{{banners}}" wx:key="index">
+      <view class="banner-slide" style="background: {{item.bgColor}};">
+        <view class="banner-content">
+          <text class="banner-title">{{item.title}}</text>
+          <text class="banner-desc">{{item.desc}}</text>
+        </view>
+        <text class="banner-emoji">{{item.emoji}}</text>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <!-- ===== 分类 Tab ===== -->
+  <scroll-view class="category-tabs" scroll-x enable-flex>
+    <view
+      class="category-tab {{activeCategory === item.key ? 'category-tab--active' : ''}}"
+      wx:for="{{categories}}"
+      wx:key="key"
+      data-key="{{item.key}}"
+      bindtap="onCategoryChange"
+    >
+      {{item.label}}
+    </view>
+  </scroll-view>
+
+  <!-- ===== 菜品列表 ===== -->
+  <scroll-view
+    class="dish-scroll"
+    scroll-y
+    lower-threshold="100"
+    bindscrolltolower="onLoadMore"
+    wx:if="{{dishes.length > 0}}"
+  >
+    <view class="dish-grid">
+      <view
+        class="dish-card"
+        wx:for="{{dishes}}"
+        wx:key="dish_id"
+        data-dish="{{item}}"
+        bindtap="onDishTap"
+      >
+        <!-- 菜品图片 -->
+        <view class="dish-card__image-wrapper">
+          <image
+            class="dish-card__image"
+            src="{{item.image_url}}"
+            mode="aspectFill"
+            lazy-load
+            binderror="onImageError"
+            data-index="{{index}}"
+          />
+          <view class="dish-card__category-tag">{{item.category || '美食'}}</view>
+        </view>
+        <!-- 菜品信息 -->
+        <view class="dish-card__info">
+          <text class="dish-card__name text-ellipsis">{{item.dish_name}}</text>
+          <view class="dish-card__footer flex-between">
+            <text class="dish-card__price">¥{{item.price}}</text>
+            <text class="dish-card__stall text-ellipsis" wx:if="{{item.stall_name}}">{{item.stall_name}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="loading-more" wx:if="{{loading}}">
+      <text>加载中...</text>
+    </view>
+    <view class="loading-more" wx:if="{{noMore && dishes.length > 0}}">
+      <text>— 已经到底了 —</text>
+    </view>
+  </scroll-view>
+
+  <!-- ===== 空状态 ===== -->
+  <view class="empty-state" wx:if="{{dishes.length === 0 && !loading}}">
+    <text class="empty-icon">🍽️</text>
+    <text class="empty-text">暂无菜品</text>
+    <text class="empty-text text-sm" style="margin-top: 8rpx;">换个分类试试吧</text>
+  </view>
+
+  <!-- ===== 首页加载骨架屏 ===== -->
+  <view class="dish-grid" wx:if="{{loading && dishes.length === 0}}">
+    <view class="dish-card dish-card--skeleton" wx:for="{{[1,2,3,4,5,6]}}" wx:key="index">
+      <view class="dish-card__image-wrapper skeleton-bg"></view>
+      <view class="dish-card__info">
+        <view class="skeleton-line skeleton-line--long"></view>
+        <view class="skeleton-line skeleton-line--short"></view>
+      </view>
+    </view>
+  </view>
+
+</view>

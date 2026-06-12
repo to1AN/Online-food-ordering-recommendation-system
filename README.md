@@ -170,8 +170,3 @@ git push -u origin feature/你的功能名
 netstat -ano | findstr 9999
 taskkill /PID <PID> /F
 ```
-
-**SSL 证书错误（Git 推送）**
-```bash
-git config --global http.sslBackend schannel
-```

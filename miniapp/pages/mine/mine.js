@@ -38,7 +38,12 @@ Page({
     // 重新评分
     showRatingPopup: false,
     ratingDish: null,
-    ratingValue: 0
+    ratingValue: 0,
+
+    // 分页
+    page: 1,
+    pageSize: 10,
+    hasMore: true
   },
 
   onLoad() {
@@ -332,5 +337,21 @@ Page({
 
   onAvatarError() {
     // default fallback — handled by wxml conditional rendering
+  },
+
+  onReachBottom() {
+    if (this.data.hasMore && !this.data.loading) {
+      this.setData({ page: this.data.page + 1 })
+      this.loadMore()
+    }
+  },
+
+  async loadMore() {
+    const { activeTab } = this.data
+    if (activeTab === 'favorites') {
+      this.setData({ hasMore: false })
+    } else if (activeTab === 'history') {
+      this.setData({ hasMore: false })
+    }
   }
 })

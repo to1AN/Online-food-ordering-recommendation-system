@@ -65,11 +65,9 @@
         <text class="score-label">分</text>
         <!-- 简易星级 -->
         <view class="star-row">
-          <text
-            class="star-item"
-            wx:for="{{[1,2,3,4,5]}}"
-            wx:key="index"
-          >{{item.avg_score >= (index + 1) ? '★' : (item.avg_score >= (index + 0.5) ? '☆' : '☆')}}</text>
+          <text class="star-item star-item--full" wx:for="{{item.fullStarArr}}" wx:key="*this">★</text>
+          <text class="star-item star-item--half" wx:if="{{item.hasHalfStar}}">☆</text>
+          <text class="star-item star-item--empty" wx:for="{{item.emptyStarArr}}" wx:key="*this">☆</text>
         </view>
       </view>
     </view>

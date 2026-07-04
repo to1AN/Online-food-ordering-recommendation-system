@@ -1,6 +1,8 @@
 package com.foodrec.admin.controller.admin;
 
 import com.foodrec.admin.common.Result;
+import com.foodrec.admin.controller.admin.dto.DishSaveRequest;
+import com.foodrec.admin.controller.admin.dto.StallSaveRequest;
 import com.foodrec.admin.entity.Dish;
 import com.foodrec.admin.entity.Stall;
 import com.foodrec.admin.service.AdminService;
@@ -31,7 +33,11 @@ public class MerchantController {
     }
 
     @PostMapping("/stalls")
-    public Result<String> addStall(@Valid @RequestBody Stall stall) {
+    public Result<String> addStall(@Valid @RequestBody StallSaveRequest req) {
+        Stall stall = new Stall();
+        stall.setStallName(req.getStallName());
+        stall.setLocation(req.getLocation());
+        stall.setMerchantId(req.getMerchantId());
         return adminService.addStall(stall)
             ? Result.ok("添加成功")
             : Result.fail("添加失败");
@@ -82,7 +88,14 @@ public class MerchantController {
     }
 
     @PostMapping("/dishes")
-    public Result<String> addDish(@Valid @RequestBody Dish dish) {
+    public Result<String> addDish(@Valid @RequestBody DishSaveRequest req) {
+        Dish dish = new Dish();
+        dish.setDishName(req.getDishName());
+        dish.setPrice(req.getPrice());
+        dish.setCategory(req.getCategory());
+        dish.setDescription(req.getDescription());
+        dish.setImageUrl(req.getImageUrl());
+        dish.setStallId(req.getStallId());
         return adminService.addDish(dish)
             ? Result.ok("添加成功")
             : Result.fail("添加失败");

@@ -1,8 +1,12 @@
 package com.foodrec.admin.controller;
 
 import com.foodrec.admin.common.Result;
+import com.foodrec.admin.controller.miniapp.dto.FavoriteRequest;
+import com.foodrec.admin.controller.miniapp.dto.LoginRequest;
+import com.foodrec.admin.controller.miniapp.dto.ScoreRequest;
 import com.foodrec.admin.entity.Dish;
 import com.foodrec.admin.service.miniapp.MiniAppService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,11 +38,8 @@ public class MiniAppController {
      * 返回: { token, userInfo: { userId, username, avatar } }
      */
     @PostMapping("/login")
-    public Result<Map<String, Object>> login(@RequestBody Map<String, String> body) {
-        String code = body.get("code");
-        if (code == null || code.isEmpty()) {
-            return Result.fail("缺少 code 参数");
-        }
+    public Result<Map<String, Object>> login(@Valid @RequestBody LoginRequest body) {
+        String code = body.getCode();
         try {
             Map<String, Object> data = miniAppService.login(code);
             return Result.ok(data);
@@ -91,13 +92,8 @@ public class MiniAppController {
      * Body: { userId, dishId }
      */
     @PostMapping("/favorite")
-    public Result<String> addFavorite(@RequestBody Map<String, Long> body) {
-        Long userId = body.get("userId");
-        Long dishId = body.get("dishId");
-        if (userId == null || dishId == null) {
-            return Result.fail("userId 和 dishId 不能为空");
-        }
-        return miniAppService.addFavorite(userId, dishId)
+    public Result<String> addFavorite(@Valid @RequestBody FavoriteRequest body) {
+        return miniAppService.addFavorite(body.getUserId(), body.getDishId())
                 ? Result.ok("收藏成功")
                 : Result.fail("收藏失败");
     }
@@ -135,14 +131,8 @@ public class MiniAppController {
      * Body: { userId, dishId, score (1~5) }
      */
     @PostMapping("/score")
-    public Result<String> scoreDish(@RequestBody Map<String, Object> body) {
-        Long userId = toLong(body.get("userId"));
-        Long dishId = toLong(body.get("dishId"));
-        int score = (int) body.getOrDefault("score", 0);
-        if (userId == null || dishId == null || score < 1 || score > 5) {
-            return Result.fail("参数错误：需要 userId, dishId, score(1~5)");
-        }
-        return miniAppService.scoreDish(userId, dishId, score)
+    public Result<String> scoreDish(@Valid @RequestBody ScoreRequest body) {
+        return miniAppService.scoreDish(body.getUserId(), body.getDishId(), body.getScore())
                 ? Result.ok("评分成功")
                 : Result.fail("评分失败");
     }

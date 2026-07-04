@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -411,5 +412,76 @@ public class AdminServiceImpl implements AdminService {
         } catch (IOException e) {
             return "删除失败: " + e.getMessage();
         }
+    }
+
+    // ==================== 菜品统计与状态 ====================
+    @Override
+    public Map<String, Object> getDishStats() {
+        List<Dish> allDishes = dishMapper.selectList(null);
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("total", allDishes.size());
+        stats.put("categoryCount", allDishes.stream().map(Dish::getCategory).distinct().count());
+        stats.put("avgPrice", allDishes.stream()
+                .mapToDouble(d -> d.getPrice().doubleValue()).average().orElse(0));
+        return stats;
+    }
+
+    @Override
+    public boolean updateDishStatus(Long dishId, String status) {
+        Dish dish = dishMapper.selectById(dishId);
+        if (dish == null) return false;
+        dish.setStatus(status);
+        return dishMapper.updateById(dish) > 0;
+    }
+
+    // ==================== 导出、通知、备份下载 ====================
+    @Override
+    public Map<String, Object> getNotificationCount() {
+        Map<String, Object> counts = new HashMap<>();
+        LambdaQueryWrapper<Dish> dishQw = new LambdaQueryWrapper<>();
+        dishQw.eq(Dish::getStatus, "pending");
+        counts.put("pendingDishes", dishMapper.selectCount(dishQw));
+        counts.put("totalBackups", getBackupList().size());
+        return counts;
+    }
+
+    @Override
+    public byte[] exportCsv(String type) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        if ("users".equals(type)) {
+            sb.append("用户ID,用户名,注册时间\n");
+            List<User> users = userMapper.selectList(null);
+            for (User u : users) {
+                sb.append(String.format("%d,%s,%s\n", u.getUserId(), u.getUsername(), u.getRegisterTime()));
+            }
+        } else if ("dishes".equals(type)) {
+            sb.append("菜品ID,菜品名称,价格,分类,档口ID\n");
+            List<Dish> dishes = dishMapper.selectList(null);
+            for (Dish d : dishes) {
+                sb.append(String.format("%d,%s,%.2f,%s,%d\n", d.getDishId(), d.getDishName(), d.getPrice(), d.getCategory(), d.getStallId()));
+            }
+        } else if ("favorites".equals(type)) {
+            sb.append("收藏ID,用户ID,菜品ID,收藏时间\n");
+            List<Favorite> favs = favoriteMapper.selectList(null);
+            for (Favorite f : favs) {
+                sb.append(String.format("%d,%d,%d,%s\n", f.getFavoriteId(), f.getUserId(), f.getDishId(), f.getFavoriteTime()));
+            }
+        } else if ("histories".equals(type)) {
+            sb.append("历史ID,用户ID,菜品ID,评分,点赞,选餐时间\n");
+            List<SelectionHistory> histories = historyMapper.selectList(null);
+            for (SelectionHistory h : histories) {
+                sb.append(String.format("%d,%d,%d,%d,%s,%s\n", h.getHistoryId(), h.getUserId(), h.getDishId(), h.getScore(), h.getLikeStatus(), h.getSelectTime()));
+            }
+        } else {
+            throw new RuntimeException("未知导出类型: " + type);
+        }
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public byte[] downloadBackup(String filename) throws IOException {
+        Path filepath = Paths.get(backupDir, filename);
+        if (!Files.exists(filepath)) throw new RuntimeException("文件不存在: " + filename);
+        return Files.readAllBytes(filepath);
     }
 }

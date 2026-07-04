@@ -5,8 +5,11 @@ import com.foodrec.admin.entity.Merchant;
 import com.foodrec.admin.service.AdminService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -129,5 +132,29 @@ public class AdminController {
     @DeleteMapping("/backups/{id}")
     public Result<String> deleteBackup(@PathVariable Long id) {
         return Result.ok(adminService.deleteBackup(id));
+    }
+
+    // ==================== 导出、通知、备份下载 ====================
+    @GetMapping("/export/{type}")
+    public ResponseEntity<byte[]> exportCsv(@PathVariable String type) throws IOException {
+        byte[] data = adminService.exportCsv(type);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type", "text/csv; charset=UTF-8");
+        headers.add("Content-Disposition", "attachment; filename=" + type + ".csv");
+        return ResponseEntity.ok().headers(headers).body(data);
+    }
+
+    @GetMapping("/notifications/count")
+    public Result<Map<String, Object>> notificationCount() {
+        return Result.ok(adminService.getNotificationCount());
+    }
+
+    @GetMapping("/backups/{filename}/download")
+    public ResponseEntity<byte[]> downloadBackup(@PathVariable String filename) throws IOException {
+        byte[] data = adminService.downloadBackup(filename);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type", "application/octet-stream");
+        headers.add("Content-Disposition", "attachment; filename=" + filename);
+        return ResponseEntity.ok().headers(headers).body(data);
     }
 }

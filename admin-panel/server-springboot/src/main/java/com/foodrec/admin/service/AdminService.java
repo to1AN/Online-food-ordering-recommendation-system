@@ -5,6 +5,7 @@ import com.foodrec.admin.entity.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.io.IOException;
 
 public interface AdminService {
 
@@ -52,4 +53,13 @@ public interface AdminService {
     String createBackup();
     String restoreBackup(Long id);
     String deleteBackup(Long id);
+
+    // ==================== 菜品统计与状态 ====================
+    Map<String, Object> getDishStats();
+    boolean updateDishStatus(Long dishId, String status);
+
+    // ==================== 导出、通知、备份下载 ====================
+    byte[] exportCsv(String type) throws IOException;
+    Map<String, Object> getNotificationCount();
+    byte[] downloadBackup(String filename) throws IOException;
 }

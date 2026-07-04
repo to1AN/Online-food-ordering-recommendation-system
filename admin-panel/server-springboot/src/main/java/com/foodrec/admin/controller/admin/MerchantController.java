@@ -115,4 +115,21 @@ public class MerchantController {
             ? Result.ok("删除成功")
             : Result.fail("删除失败");
     }
+
+    // ==================== 菜品统计与状态 ====================
+    @GetMapping("/dishes/stats")
+    public Result<Map<String, Object>> dishStats() {
+        return Result.ok(adminService.getDishStats());
+    }
+
+    @PutMapping("/dishes/{id}/status")
+    public Result<String> updateDishStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String status = body.get("status");
+        if (status == null || (!status.equals("pending") && !status.equals("approved") && !status.equals("rejected"))) {
+            return Result.fail("无效的状态值，需为 pending/approved/rejected");
+        }
+        return adminService.updateDishStatus(id, status)
+                ? Result.ok("状态更新成功")
+                : Result.fail("更新失败");
+    }
 }

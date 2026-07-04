@@ -25,4 +25,5 @@ public class Dish {
     private String imageUrl;
     @NotNull(message = "所属档口不能为空")
     private Long stallId;
+    private String status; // pending, approved, rejected
 }

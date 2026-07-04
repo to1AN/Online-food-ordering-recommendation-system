@@ -7,15 +7,15 @@ import com.foodrec.admin.entity.*;
 import com.foodrec.admin.mapper.*;
 import com.foodrec.admin.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class AdminServiceImpl implements AdminService {
@@ -27,9 +27,25 @@ public class AdminServiceImpl implements AdminService {
     @Autowired private SelectionHistoryMapper historyMapper;
     @Autowired private FavoriteMapper favoriteMapper;
 
-    // 内存模拟备份存储
-    private final List<Map<String, Object>> backupStore = new CopyOnWriteArrayList<>();
-    private final AtomicLong backupIdGen = new AtomicLong(1);
+    @Value("${backup.dir:./backup}")
+    private String backupDir;
+
+    @Value("${backup.mysqldump-path:mysqldump}")
+    private String mysqldumpPath;
+
+    @Value("${spring.datasource.url}")
+    private String dbUrl;
+
+    @Value("${spring.datasource.username}")
+    private String dbUsername;
+
+    @Value("${spring.datasource.password}")
+    private String dbPassword;
+
+    private String getDbName() {
+        String[] parts = dbUrl.split("\\?")[0].split("/");
+        return parts[parts.length - 1];
+    }
 
     // ==================== 仪表盘 ====================
     @Override
@@ -110,8 +126,7 @@ public class AdminServiceImpl implements AdminService {
     public List<User> getUserList(String keyword, int page, int pageSize) {
         LambdaQueryWrapper<User> qw = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
-            qw.and(w -> w.like(User::getUsername, keyword)
-                          .or().like(User::getUserId, keyword));
+            qw.like(User::getUsername, keyword);
         }
         qw.orderByDesc(User::getRegisterTime);
         Page<User> p = new Page<>(page, pageSize);
@@ -122,14 +137,23 @@ public class AdminServiceImpl implements AdminService {
     public long getUserCount(String keyword) {
         LambdaQueryWrapper<User> qw = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
-            qw.and(w -> w.like(User::getUsername, keyword)
-                          .or().like(User::getUserId, keyword));
+            qw.like(User::getUsername, keyword);
         }
         return userMapper.selectCount(qw);
     }
 
     @Override
+    @Transactional
     public boolean deleteUser(Long id) {
+        // 1. 删除该用户的收藏记录
+        LambdaQueryWrapper<Favorite> favQw = new LambdaQueryWrapper<>();
+        favQw.eq(Favorite::getUserId, id);
+        favoriteMapper.delete(favQw);
+        // 2. 删除该用户的选餐历史
+        LambdaQueryWrapper<SelectionHistory> histQw = new LambdaQueryWrapper<>();
+        histQw.eq(SelectionHistory::getUserId, id);
+        historyMapper.delete(histQw);
+        // 3. 删除用户
         return userMapper.deleteById(id) > 0;
     }
 
@@ -170,7 +194,20 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional
     public boolean deleteMerchant(Long id) {
+        // 1. 查询该商户下的所有档口
+        LambdaQueryWrapper<Stall> stallQw = new LambdaQueryWrapper<>();
+        stallQw.eq(Stall::getMerchantId, id);
+        List<Stall> stalls = stallMapper.selectList(stallQw);
+        // 2. 删除每个档口下的菜品，再删除档口
+        for (Stall stall : stalls) {
+            LambdaQueryWrapper<Dish> dishQw = new LambdaQueryWrapper<>();
+            dishQw.eq(Dish::getStallId, stall.getStallId());
+            dishMapper.delete(dishQw);
+            stallMapper.deleteById(stall.getStallId());
+        }
+        // 3. 删除商户
         return merchantMapper.deleteById(id) > 0;
     }
 
@@ -265,8 +302,11 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public long getFavoriteCount(String keyword) {
-        if (keyword == null || keyword.isEmpty()) return favoriteMapper.selectCount(null);
-        return favoriteMapper.selectCount(null);
+        LambdaQueryWrapper<Favorite> qw = new LambdaQueryWrapper<>();
+        if (keyword != null && !keyword.isEmpty()) {
+            qw.like(Favorite::getDishId, keyword);
+        }
+        return favoriteMapper.selectCount(qw);
     }
 
     @Override
@@ -277,50 +317,99 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public long getHistoryCount(String keyword) {
-        if (keyword == null || keyword.isEmpty()) return historyMapper.selectCount(null);
-        return historyMapper.selectCount(null);
+        LambdaQueryWrapper<SelectionHistory> qw = new LambdaQueryWrapper<>();
+        if (keyword != null && !keyword.isEmpty()) {
+            qw.like(SelectionHistory::getDishId, keyword);
+        }
+        return historyMapper.selectCount(qw);
     }
 
     // ==================== 数据库备份 ====================
     @Override
     public List<Map<String, Object>> getBackupList() {
-        if (backupStore.isEmpty()) {
-            // 初始化模拟数据
-            for (int i = 1; i <= 4; i++) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        Path dir = Paths.get(backupDir);
+        if (!Files.exists(dir)) return list;
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*.sql")) {
+            for (Path entry : stream) {
                 Map<String, Object> b = new HashMap<>();
-                b.put("id", backupIdGen.getAndIncrement());
-                b.put("filename", "backup_2025060" + i + "_030000.sql");
-                b.put("size", String.format("%.1f MB", 2.2 + i * 0.1));
-                b.put("time", "2025-06-0" + i + " 03:00:00");
-                b.put("type", "自动备份");
-                backupStore.add(b);
+                b.put("id", entry.getFileName().toString());
+                b.put("filename", entry.getFileName().toString());
+                try {
+                    b.put("size", String.format("%.1f MB", Files.size(entry) / 1048576.0));
+                } catch (IOException e) {
+                    b.put("size", "未知");
+                }
+                b.put("time", Files.getLastModifiedTime(entry).toString());
+                b.put("type", entry.getFileName().toString().contains("auto") ? "自动备份" : "手动备份");
+                list.add(b);
             }
-        }
-        return new ArrayList<>(backupStore);
+        } catch (IOException e) { /* ignore */ }
+        list.sort((a, b) -> ((String) b.get("time")).compareTo((String) a.get("time")));
+        return list;
     }
 
     @Override
     public String createBackup() {
-        String filename = "backup_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".sql";
-        Map<String, Object> b = new HashMap<>();
-        b.put("id", backupIdGen.getAndIncrement());
-        b.put("filename", filename);
-        b.put("size", "2.6 MB");
-        b.put("time", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        b.put("type", "手动备份");
-        backupStore.add(0, b);
-        return "备份成功！文件: " + filename;
+        try {
+            Files.createDirectories(Paths.get(backupDir));
+            String filename = "backup_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".sql";
+            Path filepath = Paths.get(backupDir, filename);
+            ProcessBuilder pb = new ProcessBuilder(
+                mysqldumpPath,
+                "-u" + dbUsername,
+                "-p" + dbPassword,
+                "--databases", getDbName(),
+                "--result-file=" + filepath.toAbsolutePath().toString()
+            );
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                return "备份失败，mysqldump 退出码: " + exitCode;
+            }
+            return "备份成功！文件: " + filename;
+        } catch (Exception e) {
+            return "备份失败: " + e.getMessage();
+        }
     }
 
     @Override
     public String restoreBackup(Long id) {
-        // 模拟恢复操作
-        return "从备份 ID=" + id + " 恢复数据成功！";
+        String filename = String.valueOf(id);
+        Path filepath = Paths.get(backupDir, filename);
+        if (!Files.exists(filepath)) {
+            return "备份文件不存在: " + filename;
+        }
+        try {
+            ProcessBuilder pb = new ProcessBuilder(
+                "mysql",
+                "-u" + dbUsername,
+                "-p" + dbPassword,
+                getDbName()
+            );
+            pb.redirectInput(filepath.toFile());
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                return "恢复失败，mysql 退出码: " + exitCode;
+            }
+            return "从备份 " + filename + " 恢复数据成功！";
+        } catch (Exception e) {
+            return "恢复失败: " + e.getMessage();
+        }
     }
 
     @Override
     public String deleteBackup(Long id) {
-        backupStore.removeIf(b -> id.equals(b.get("id")));
-        return "备份文件已删除";
+        String filename = String.valueOf(id);
+        Path filepath = Paths.get(backupDir, filename);
+        try {
+            Files.deleteIfExists(filepath);
+            return "备份文件已删除: " + filename;
+        } catch (IOException e) {
+            return "删除失败: " + e.getMessage();
+        }
     }
 }

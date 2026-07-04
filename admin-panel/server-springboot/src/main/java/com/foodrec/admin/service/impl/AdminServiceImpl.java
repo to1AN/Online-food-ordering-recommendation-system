@@ -198,6 +198,64 @@ public class AdminServiceImpl implements AdminService {
         return dishMapper.countDishWithStall(keyword, category);
     }
 
+    @Override
+    public Dish getDishById(Long id) {
+        return dishMapper.selectById(id);
+    }
+
+    @Override
+    public boolean addDish(Dish dish) {
+        return dishMapper.insert(dish) > 0;
+    }
+
+    @Override
+    public boolean updateDish(Dish dish) {
+        return dishMapper.updateById(dish) > 0;
+    }
+
+    @Override
+    public boolean deleteDish(Long id) {
+        return dishMapper.deleteById(id) > 0;
+    }
+
+    // ==================== 档口 CRUD ====================
+    @Override
+    public boolean addStall(Stall stall) {
+        return stallMapper.insert(stall) > 0;
+    }
+
+    @Override
+    public boolean updateStall(Stall stall) {
+        return stallMapper.updateById(stall) > 0;
+    }
+
+    @Override
+    public boolean deleteStall(Long id) {
+        // 级联删除该档口下的所有菜品
+        LambdaQueryWrapper<Dish> dishQw = new LambdaQueryWrapper<>();
+        dishQw.eq(Dish::getStallId, id);
+        dishMapper.delete(dishQw);
+        return stallMapper.deleteById(id) > 0;
+    }
+
+    @Override
+    public List<Map<String, Object>> getStallDishes(Long stallId, int page, int pageSize) {
+        LambdaQueryWrapper<Dish> qw = new LambdaQueryWrapper<>();
+        qw.eq(Dish::getStallId, stallId);
+        Page<Dish> p = new Page<>(page, pageSize);
+        return dishMapper.selectPage(p, qw).getRecords().stream().map(dish -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("dishId", dish.getDishId());
+            map.put("dishName", dish.getDishName());
+            map.put("price", dish.getPrice());
+            map.put("category", dish.getCategory());
+            map.put("description", dish.getDescription());
+            map.put("imageUrl", dish.getImageUrl());
+            map.put("stallId", dish.getStallId());
+            return map;
+        }).toList();
+    }
+
     // ==================== 全局数据查询 ====================
     @Override
     public List<Map<String, Object>> getFavoriteList(String keyword, int page, int pageSize) {

@@ -28,10 +28,18 @@ public interface AdminService {
     // ==================== 档口总览 ====================
     List<Map<String, Object>> getStallList(String keyword, int page, int pageSize);
     long getStallCount(String keyword);
+    boolean addStall(Stall stall);
+    boolean updateStall(Stall stall);
+    boolean deleteStall(Long id);
+    List<Map<String, Object>> getStallDishes(Long stallId, int page, int pageSize);
 
     // ==================== 菜品总览 ====================
     List<Map<String, Object>> getDishList(String keyword, String category, int page, int pageSize);
     long getDishCount(String keyword, String category);
+    Dish getDishById(Long id);
+    boolean addDish(Dish dish);
+    boolean updateDish(Dish dish);
+    boolean deleteDish(Long id);
 
     // ==================== 全局数据查询 ====================
     List<Map<String, Object>> getFavoriteList(String keyword, int page, int pageSize);

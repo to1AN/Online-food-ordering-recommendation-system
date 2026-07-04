@@ -15,6 +15,12 @@ public interface MiniAppService {
     /** 微信 code 换取 token + userInfo */
     Map<String, Object> login(String code);
 
+    /** 退出登录（JWT 无状态，无需服务端操作） */
+    boolean logout(String token);
+
+    /** 根据 token 获取 userId */
+    Long getUserIdByToken(String token);
+
     // ==================== 推荐 ====================
     /** 随机推荐一道菜 */
     Dish getRandomDish();

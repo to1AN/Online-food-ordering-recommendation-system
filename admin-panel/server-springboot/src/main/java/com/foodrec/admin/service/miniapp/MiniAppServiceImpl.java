@@ -10,7 +10,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import com.foodrec.admin.common.JwtUtils;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,9 +20,7 @@ public class MiniAppServiceImpl implements MiniAppService {
     @Autowired private DishMapper dishMapper;
     @Autowired private FavoriteMapper favoriteMapper;
     @Autowired private SelectionHistoryMapper historyMapper;
-
-    // token → userId 映射（生产环境应使用 Redis）
-    private final ConcurrentHashMap<String, Long> tokenStore = new ConcurrentHashMap<>();
+    @Autowired private JwtUtils jwtUtils;
 
     @Value("${wechat.miniapp.appid}")
     private String appid;
@@ -71,9 +69,8 @@ public class MiniAppServiceImpl implements MiniAppService {
             userMapper.insert(user);
         }
 
-        // 生成 token
-        String token = UUID.randomUUID().toString().replace("-", "");
-        tokenStore.put(token, user.getUserId());
+        // 生成 JWT token
+        String token = jwtUtils.generateToken(user.getUserId(), openid);
 
         // 构造返回
         Map<String, Object> result = new HashMap<>();
@@ -86,6 +83,12 @@ public class MiniAppServiceImpl implements MiniAppService {
         result.put("userInfo", userInfo);
 
         return result;
+    }
+
+    @Override
+    public boolean logout(String token) {
+        // JWT is stateless, no server-side invalidation needed
+        return true;
     }
 
     // ==================== 推荐 ====================
@@ -254,8 +257,8 @@ public class MiniAppServiceImpl implements MiniAppService {
         return map;
     }
 
-    /** 根据 token 获取 userId，供拦截器或 Controller 使用 */
+    @Override
     public Long getUserIdByToken(String token) {
-        return token != null ? tokenStore.get(token) : null;
+        return jwtUtils.getUserIdFromToken(token);
     }
 }

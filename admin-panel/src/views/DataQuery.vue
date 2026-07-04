@@ -132,8 +132,8 @@
 
     <!-- 导出按钮 -->
     <div style="text-align: right; margin-top: 8px;">
-      <el-button @click="handleExport">
-        <el-icon><Download /></el-icon>导出当前数据 (CSV)
+      <el-button type="success" size="small" @click="handleExport(activeTab)">
+        <el-icon><Download /></el-icon>导出CSV
       </el-button>
     </div>
   </div>
@@ -249,9 +249,9 @@ const handleTabChange = (tabName) => {
   if (fetchers[tabName]) fetchers[tabName]()
 }
 
-const handleExport = () => {
-  ElMessage.info(`正在导出${activeTab.value}数据...`)
-  // 实际导出请求: api.exportData(activeTab.value, searchForm)
+const handleExport = (type) => {
+  window.open(`/api/admin/export/${type}`, '_blank')
+  ElMessage.success('导出中...')
 }
 
 onMounted(() => { fetchUsers() })

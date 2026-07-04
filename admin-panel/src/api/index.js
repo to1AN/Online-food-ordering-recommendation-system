@@ -128,4 +128,17 @@ export default {
   getSystemLogs(params) {
     return http.get('/logs', { params })
   },
+
+  // ===================== 菜品统计 =====================
+  getDishStats() {
+    return http.get('/dishes/stats')
+  },
+  updateDishStatus(dishId, status) {
+    return http.put(`/dishes/${dishId}/status`, { status })
+  },
+
+  // ===================== 通知 =====================
+  getNotificationCount() {
+    return http.get('/notifications/count')
+  },
 }

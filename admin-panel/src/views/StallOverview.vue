@@ -115,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
@@ -139,17 +139,11 @@ const loadingDishes = ref(false)
 
 const searchForm = reactive({ keyword: '', merchant: '' })
 
-const searchFilters = [
-  { prop: 'merchant', type: 'select', placeholder: '按商户筛选', options: [
-    { label: '美味轩餐饮', value: '美味轩餐饮' },
-    { label: '香满楼饮食', value: '香满楼饮食' },
-    { label: '聚福阁餐厅', value: '聚福阁餐厅' },
-    { label: '御膳坊', value: '御膳坊' },
-    { label: '百味园食品', value: '百味园食品' },
-  ]},
-]
-
 const merchantOptions = ref([])
+
+const searchFilters = computed(() => [
+  { prop: 'merchant', type: 'select', placeholder: '按商户筛选', options: merchantOptions.value.map(m => ({ label: m.merchant_name, value: m.merchant_name })) },
+])
 
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
 

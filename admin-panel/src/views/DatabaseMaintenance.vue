@@ -282,7 +282,7 @@ const handleRestore = async (id) => {
 }
 
 const handleDownload = (row) => {
-  ElMessage.info(`正在下载 ${row.filename} ...`)
+  window.open(`/api/admin/backups/${row.filename}/download`, '_blank')
 }
 
 const handleDeleteBackup = async (id) => {
@@ -308,11 +308,15 @@ const confirmCleanup = async () => {
 }
 
 const saveAutoBackupSettings = () => {
+  localStorage.setItem('autoBackup_enabled', autoBackupEnabled.value)
+  localStorage.setItem('autoBackup_frequency', backupFrequency.value)
   ElMessage.success('自动备份设置已保存')
   autoBackupVisible.value = false
 }
 
 onMounted(() => {
+  autoBackupEnabled.value = localStorage.getItem('autoBackup_enabled') === 'true'
+  backupFrequency.value = localStorage.getItem('autoBackup_frequency') || 'daily'
   fetchBackupList()
   fetchLogs()
 })

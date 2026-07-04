@@ -6,15 +6,15 @@ spring:
     property-naming-strategy: SNAKE_CASE
   datasource:
     url: jdbc:mysql://localhost:3306/food_recommendation?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
-    username: root
-    password: 123456
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 # 微信小程序配置
 wechat:
   miniapp:
-    appid: your-appid-here       # 替换为真实 AppID
-    secret: your-secret-here     # 替换为真实 Secret
+    appid: ${WECHAT_APPID:your-appid-here}
+    secret: ${WECHAT_SECRET:your-secret-here}
 
 mybatis-plus:
   configuration:
@@ -27,3 +27,9 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
   mapper-locations: classpath*:/mapper/**/*.xml
+
+# 备份配置
+backup:
+  dir: ${BACKUP_DIR:./backup}
+  mysqldump-path: ${MYSQLDUMP_PATH:mysqldump}
+  mysql-path: ${MYSQL_PATH:mysql}

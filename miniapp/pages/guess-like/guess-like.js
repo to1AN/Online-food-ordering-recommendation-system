@@ -9,7 +9,10 @@ const app = getApp()
 Page({
   data: {
     list: [],
-    loading: false
+    loading: false,
+    page: 1,
+    pageSize: 10,
+    hasMore: true
   },
 
   onLoad() {
@@ -55,5 +58,16 @@ Page({
     wx.navigateTo({
       url: `/pages/dish-detail/dish-detail?dishId=${dish.dish_id}&dishName=${encodeURIComponent(dish.dish_name)}`
     })
+  },
+
+  onReachBottom() {
+    if (this.data.hasMore && !this.data.loading) {
+      this.setData({ page: this.data.page + 1 })
+      this.loadMore()
+    }
+  },
+
+  async loadMore() {
+    this.setData({ hasMore: false })
   }
 })

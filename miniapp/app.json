@@ -4,7 +4,8 @@
     "pages/random/random",
     "pages/guess-like/guess-like",
     "pages/today-praise/today-praise",
-    "pages/dish-detail/dish-detail"
+    "pages/dish-detail/dish-detail",
+    "pages/mine/mine"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -34,6 +35,10 @@
       {
         "pagePath": "pages/today-praise/today-praise",
         "text": "好评榜"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
       }
     ]
   },

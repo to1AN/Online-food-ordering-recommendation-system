@@ -5,13 +5,13 @@
     <!-- 统计卡片 -->
     <el-row :gutter="16" class="audit-stats">
       <el-col :span="8">
-        <StatCard label="菜品总数" :value="pagination.total" icon="Dish" gradient="linear-gradient(135deg, #667eea, #764ba2)" />
+        <StatCard label="菜品总数" :value="stats.total" icon="Dish" gradient="linear-gradient(135deg, #667eea, #764ba2)" />
       </el-col>
       <el-col :span="8">
-        <StatCard label="分类数" :value="categoryCount" icon="Grid" gradient="linear-gradient(135deg, #4facfe, #00f2fe)" />
+        <StatCard label="分类数" :value="stats.categoryCount" icon="Grid" gradient="linear-gradient(135deg, #4facfe, #00f2fe)" />
       </el-col>
       <el-col :span="8">
-        <StatCard label="平均价格" :value="'¥' + avgPrice" icon="Coin" gradient="linear-gradient(135deg, #43e97b, #38f9d7)" />
+        <StatCard label="平均价格" :value="'¥' + stats.avgPrice" icon="Coin" gradient="linear-gradient(135deg, #43e97b, #38f9d7)" />
       </el-col>
     </el-row>
 
@@ -58,6 +58,13 @@
           </div>
           <div v-if="dish.description" class="dish-desc">{{ dish.description }}</div>
         </div>
+        <div v-if="dish.status === 'pending'" class="dish-card-actions">
+          <el-button size="small" type="success" @click.stop="handleApprove(dish)">通过</el-button>
+          <el-button size="small" type="danger" @click.stop="handleReject(dish)">拒绝</el-button>
+        </div>
+        <StatusTag v-else-if="dish.status"
+          :status="dish.status"
+          :text="dish.status === 'approved' ? '已通过' : dish.status === 'rejected' ? '已拒绝' : '待审核'" />
       </div>
     </div>
 
@@ -105,17 +112,19 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import api from '@/api'
 import PageHeader from '@/components/PageHeader.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import StatCard from '@/components/StatCard.vue'
+import StatusTag from '@/components/StatusTag.vue'
 
 const tableData = ref([])
 const loading = ref(false)
 const detailVisible = ref(false)
 const currentDish = ref(null)
 
-const searchForm = reactive({ keyword: '', category: '' })
+const searchForm = reactive({ keyword: '', category: '', status: '' })
 
 const searchFilters = [
   { prop: 'category', type: 'select', placeholder: '菜品分类', options: [
@@ -124,20 +133,28 @@ const searchFilters = [
     { label: '日料', value: '日料' }, { label: '烧烤', value: '烧烤' },
     { label: '小吃', value: '小吃' }, { label: '饮品', value: '饮品' },
   ]},
+  { prop: 'status', type: 'select', placeholder: '审核状态', options: [
+    { label: '待审核', value: 'pending' },
+    { label: '已通过', value: 'approved' },
+    { label: '已拒绝', value: 'rejected' },
+    { label: '全部', value: '' },
+  ]},
 ]
 
 const pagination = reactive({ page: 1, pageSize: 12, total: 0 })
 
-const categoryCount = computed(() => {
-  const cats = new Set(tableData.value.map(d => d.category))
-  return cats.size
-})
+const stats = reactive({ total: 0, categoryCount: 0, avgPrice: '0' })
 
-const avgPrice = computed(() => {
-  if (tableData.value.length === 0) return '0'
-  const sum = tableData.value.reduce((s, d) => s + parseFloat(d.price || 0), 0)
-  return (sum / tableData.value.length).toFixed(1)
-})
+const fetchStats = async () => {
+    try {
+        const res = await api.getDishStats()
+        if (res && res.code === 200 && res.data) {
+            stats.total = res.data.total
+            stats.categoryCount = res.data.categoryCount
+            stats.avgPrice = Number(res.data.avgPrice).toFixed(1)
+        }
+    } catch (e) { /* ignore */ }
+}
 
 const fetchData = async () => {
   loading.value = true
@@ -145,6 +162,7 @@ const fetchData = async () => {
     const res = await api.getDishes({
       keyword: searchForm.keyword,
       category: searchForm.category,
+      status: searchForm.status,
       page: pagination.page,
       pageSize: pagination.pageSize,
     })
@@ -159,6 +177,7 @@ const handleSearch = () => { pagination.page = 1; fetchData() }
 const handleReset = () => {
   searchForm.keyword = ''
   searchForm.category = ''
+  searchForm.status = ''
   pagination.page = 1
   fetchData()
 }
@@ -168,7 +187,23 @@ const handleViewDetail = (dish) => {
   detailVisible.value = true
 }
 
-onMounted(() => { fetchData() })
+const handleApprove = async (dish) => {
+    try {
+        await api.updateDishStatus(dish.dish_id, 'approved')
+        ElMessage.success('已通过')
+        fetchData()
+    } catch (e) { ElMessage.error('操作失败') }
+}
+
+const handleReject = async (dish) => {
+    try {
+        await api.updateDishStatus(dish.dish_id, 'rejected')
+        ElMessage.success('已拒绝')
+        fetchData()
+    } catch (e) { ElMessage.error('操作失败') }
+}
+
+onMounted(() => { fetchData(); fetchStats() })
 </script>
 
 <style scoped>
@@ -265,5 +300,12 @@ onMounted(() => { fetchData() })
   display: flex;
   justify-content: flex-end;
   margin-top: 16px;
+}
+
+.dish-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: flex-end;
 }
 </style>

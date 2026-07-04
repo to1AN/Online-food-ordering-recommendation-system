@@ -61,7 +61,7 @@
           <span class="header-title">{{ currentTitle }}</span>
         </div>
         <div class="header-right">
-          <el-badge :value="3" class="notice-badge">
+          <el-badge :value="notificationCount" :hidden="notificationCount === 0" class="notice-badge">
             <el-icon :size="20"><Bell /></el-icon>
           </el-badge>
           <el-dropdown trigger="click">
@@ -72,13 +72,13 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>
+                <el-dropdown-item @click="handleProfile">
                   <el-icon><UserFilled /></el-icon>个人信息
                 </el-dropdown-item>
-                <el-dropdown-item>
+                <el-dropdown-item @click="handleSettings">
                   <el-icon><Setting /></el-icon>系统设置
                 </el-dropdown-item>
-                <el-dropdown-item divided>
+                <el-dropdown-item divided @click="handleLogout">
                   <el-icon><SwitchButton /></el-icon>退出登录
                 </el-dropdown-item>
               </el-dropdown-menu>
@@ -96,14 +96,33 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import api from '@/api'
 
 const route = useRoute()
 const isCollapse = ref(false)
 
 const activeMenu = computed(() => route.path)
 const currentTitle = computed(() => route.meta?.title || '管理后台')
+
+const notificationCount = ref(0)
+
+const fetchNotificationCount = async () => {
+    try {
+        const res = await api.getNotificationCount()
+        if (res && res.code === 200 && res.data) {
+            notificationCount.value = (res.data.pendingDishes || 0) + (res.data.totalBackups || 0)
+        }
+    } catch (e) { /* ignore */ }
+}
+
+onMounted(() => { fetchNotificationCount() })
+
+const handleProfile = () => { ElMessage.info('管理员信息：系统管理员') }
+const handleSettings = () => { ElMessage.info('系统设置功能开发中') }
+const handleLogout = () => { localStorage.clear(); window.location.reload() }
 </script>
 
 <style scoped>

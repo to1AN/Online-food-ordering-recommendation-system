@@ -5,6 +5,7 @@ import com.foodrec.admin.entity.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.io.IOException;
 
 public interface AdminService {
 
@@ -28,10 +29,18 @@ public interface AdminService {
     // ==================== 档口总览 ====================
     List<Map<String, Object>> getStallList(String keyword, int page, int pageSize);
     long getStallCount(String keyword);
+    boolean addStall(Stall stall);
+    boolean updateStall(Stall stall);
+    boolean deleteStall(Long id);
+    List<Map<String, Object>> getStallDishes(Long stallId, int page, int pageSize);
 
     // ==================== 菜品总览 ====================
     List<Map<String, Object>> getDishList(String keyword, String category, int page, int pageSize);
     long getDishCount(String keyword, String category);
+    Dish getDishById(Long id);
+    boolean addDish(Dish dish);
+    boolean updateDish(Dish dish);
+    boolean deleteDish(Long id);
 
     // ==================== 全局数据查询 ====================
     List<Map<String, Object>> getFavoriteList(String keyword, int page, int pageSize);
@@ -44,4 +53,13 @@ public interface AdminService {
     String createBackup();
     String restoreBackup(Long id);
     String deleteBackup(Long id);
+
+    // ==================== 菜品统计与状态 ====================
+    Map<String, Object> getDishStats();
+    boolean updateDishStatus(Long dishId, String status);
+
+    // ==================== 导出、通知、备份下载 ====================
+    byte[] exportCsv(String type) throws IOException;
+    Map<String, Object> getNotificationCount();
+    byte[] downloadBackup(String filename) throws IOException;
 }

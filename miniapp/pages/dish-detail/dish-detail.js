@@ -34,8 +34,24 @@ Page({
       app.globalData.dishCache = null // 使用后清除
       this.checkFavoriteStatus()
     } else {
-      // 缓存未命中，从 API 加载
-      this.loadDishDetail()
+      // 缓存未命中，通过 ID 精确查询
+      this.loadDishById(dishId)
+    }
+  },
+
+  /**
+   * 通过 ID 精确查询菜品（缓存未命中时的降级方案）
+   */
+  async loadDishById(dishId) {
+    try {
+      const res = await api.getDishList({ keyword: dishId, page: 1, pageSize: 1 })
+      if (res.list && res.list.length > 0) {
+        this.setData({ dish: res.list[0] })
+      } else {
+        wx.showToast({ title: '菜品不存在', icon: 'none' })
+      }
+    } catch (e) {
+      wx.showToast({ title: '加载失败', icon: 'none' })
     }
   },
 

@@ -1,0 +1,203 @@
+<!--
+  个人中心 — 登录/收藏/历史/评分
+  成员A：用户认证与互动模块
+-->
+<view class="mine-page">
+
+  <!-- 未登录状态 -->
+  <view class="login-card" wx:if="{{!isLoggedIn}}">
+    <view class="login-avatar-placeholder">👤</view>
+    <view class="login-title">登录后享受个性化推荐</view>
+    <view class="login-desc">收藏美食 · 记录口味 · 专属推荐</view>
+    <button class="login-btn" bindtap="onLogin">微信一键登录</button>
+  </view>
+
+  <!-- 已登录状态 -->
+  <block wx:else>
+    <!-- 用户信息卡片 -->
+    <view class="profile-card">
+      <view class="profile-bg"></view>
+      <view class="profile-content">
+        <image
+          class="profile-avatar"
+          src="{{userInfo.avatar || '/images/default-avatar.png'}}"
+          mode="aspectFill"
+          binderror="onAvatarError"
+        />
+        <view class="profile-info">
+          <view class="profile-name-row" bindtap="onEditNickname">
+            <text class="profile-name">{{userInfo.username || '未设置昵称'}}</text>
+            <text class="profile-edit-icon">✎</text>
+          </view>
+          <text class="profile-id">ID: {{userInfo.userId}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 统计栏 -->
+    <view class="stats-row">
+      <view class="stat-item" bindtap="onTabChange" data-tab="favorites">
+        <text class="stat-num">{{favoriteCount}}</text>
+        <text class="stat-label">收藏</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item" bindtap="onTabChange" data-tab="history">
+        <text class="stat-num">{{historyCount}}</text>
+        <text class="stat-label">历史</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item" bindtap="onTabChange" data-tab="ratings">
+        <text class="stat-num">{{ratedCount}}</text>
+        <text class="stat-label">评分</text>
+      </view>
+    </view>
+
+    <!-- Tab 切换 -->
+    <view class="tab-bar">
+      <view
+        class="tab-item {{activeTab === 'favorites' ? 'tab-active' : ''}}"
+        bindtap="onTabChange"
+        data-tab="favorites"
+      >我的收藏</view>
+      <view
+        class="tab-item {{activeTab === 'history' ? 'tab-active' : ''}}"
+        bindtap="onTabChange"
+        data-tab="history"
+      >选餐历史</view>
+      <view
+        class="tab-item {{activeTab === 'ratings' ? 'tab-active' : ''}}"
+        bindtap="onTabChange"
+        data-tab="ratings"
+      >我的评分</view>
+    </view>
+
+    <!-- 收藏列表 -->
+    <view class="tab-content" wx:if="{{activeTab === 'favorites'}}">
+      <block wx:if="{{favorites.length > 0}}">
+        <view
+          class="dish-item"
+          wx:for="{{favorites}}"
+          wx:key="dish_id"
+          bindtap="onDishTap"
+          data-dish="{{item}}"
+        >
+          <image
+            class="dish-thumb"
+            src="{{item.image_url || '/images/default-dish.png'}}"
+            mode="aspectFill"
+            binderror="onAvatarError"
+          />
+          <view class="dish-info">
+            <text class="dish-name text-ellipsis">{{item.dish_name}}</text>
+            <text class="dish-price">¥{{item.price}}</text>
+          </view>
+          <view class="dish-action" catchtap="onRemoveFavorite" data-dish="{{item}}">
+            <text class="action-text remove-text">取消收藏</text>
+          </view>
+        </view>
+      </block>
+      <view class="empty-state" wx:else>
+        <text class="empty-icon">💔</text>
+        <text class="empty-text">还没有收藏任何菜品</text>
+      </view>
+    </view>
+
+    <!-- 历史列表 -->
+    <view class="tab-content" wx:if="{{activeTab === 'history'}}">
+      <block wx:if="{{histories.length > 0}}">
+        <view class="dish-item" wx:for="{{histories}}" wx:key="history_id">
+          <image
+            class="dish-thumb"
+            src="{{item.image_url || '/images/default-dish.png'}}"
+            mode="aspectFill"
+            binderror="onAvatarError"
+          />
+          <view class="dish-info" bindtap="onDishTap" data-dish="{{item}}">
+            <text class="dish-name text-ellipsis">{{item.dish_name}}</text>
+            <text class="dish-time">{{item.select_time}}</text>
+          </view>
+          <view class="dish-action" catchtap="onToggleLike" data-dish="{{item}}">
+            <text class="action-text {{item.like_status ? 'liked' : ''}}">
+              {{item.like_status ? '❤ 已赞' : '🤍 点赞'}}
+            </text>
+          </view>
+        </view>
+      </block>
+      <view class="empty-state" wx:else>
+        <text class="empty-icon">📋</text>
+        <text class="empty-text">还没有选餐记录</text>
+      </view>
+    </view>
+
+    <!-- 评分列表 -->
+    <view class="tab-content" wx:if="{{activeTab === 'ratings'}}">
+      <block wx:if="{{ratings.length > 0}}">
+        <view class="dish-item" wx:for="{{ratings}}" wx:key="history_id">
+          <image
+            class="dish-thumb"
+            src="{{item.image_url || '/images/default-dish.png'}}"
+            mode="aspectFill"
+            binderror="onAvatarError"
+          />
+          <view class="dish-info" bindtap="onDishTap" data-dish="{{item}}">
+            <text class="dish-name text-ellipsis">{{item.dish_name}}</text>
+            <view class="stars-display">
+              <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this" class="star {{item.score >= item ? 'star-on' : ''}}">★</text>
+            </view>
+          </view>
+          <view class="dish-action" catchtap="onOpenRating" data-dish="{{item}}">
+            <text class="action-text edit-text">重新评分</text>
+          </view>
+        </view>
+      </block>
+      <view class="empty-state" wx:else>
+        <text class="empty-icon">⭐</text>
+        <text class="empty-text">还没有评分记录</text>
+      </view>
+    </view>
+
+    <!-- 退出登录 -->
+    <view class="logout-section">
+      <button class="logout-btn" bindtap="onLogout">退出登录</button>
+    </view>
+  </block>
+
+  <!-- 编辑昵称弹窗 -->
+  <view class="popup-mask" wx:if="{{showNicknameEdit}}" bindtap="onNicknameCancel">
+    <view class="popup-box" catchtap="">
+      <view class="popup-title">编辑昵称</view>
+      <input
+        class="popup-input"
+        value="{{nicknameInput}}"
+        placeholder="请输入新昵称"
+        bindinput="onNicknameInput"
+        maxlength="20"
+      />
+      <view class="popup-btns">
+        <button class="popup-btn cancel-btn" bindtap="onNicknameCancel">取消</button>
+        <button class="popup-btn confirm-btn" bindtap="onNicknameConfirm">确定</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 评分弹窗 -->
+  <view class="popup-mask" wx:if="{{showRatingPopup}}" bindtap="onRatingCancel">
+    <view class="popup-box" catchtap="">
+      <view class="popup-title">为「{{ratingDish.dish_name}}」评分</view>
+      <view class="rating-stars">
+        <text
+          wx:for="{{[1,2,3,4,5]}}"
+          wx:key="*this"
+          class="rating-star {{ratingValue >= item ? 'star-on' : ''}}"
+          bindtap="onStarTap"
+          data-value="{{item}}"
+        >★</text>
+      </view>
+      <view class="popup-btns">
+        <button class="popup-btn cancel-btn" bindtap="onRatingCancel">取消</button>
+        <button class="popup-btn confirm-btn" bindtap="onRatingConfirm">确定</button>
+      </view>
+    </view>
+  </view>
+
+</view>

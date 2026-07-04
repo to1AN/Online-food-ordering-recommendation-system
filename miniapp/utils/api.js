@@ -15,6 +15,8 @@ const config = require('./config')
  */
 const request = (url, method = 'GET', data = {}, useAdmin = false) => {
   const baseUrl = useAdmin ? config.ADMIN_BASE_URL : config.BASE_URL
+  const app = getApp()
+  const token = app.globalData.token || wx.getStorageSync('token')
 
   return new Promise((resolve, reject) => {
     wx.request({
@@ -22,11 +24,17 @@ const request = (url, method = 'GET', data = {}, useAdmin = false) => {
       method,
       data,
       header: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
       },
       success: (res) => {
         if (res.statusCode === 200 && res.data.code === 200) {
           resolve(res.data.data)
+        } else if (res.statusCode === 401 || res.statusCode === 403) {
+          const app = getApp()
+          app.clearLoginState()
+          wx.showToast({ title: '登录已过期，请重新登录', icon: 'none', duration: 2000 })
+          reject(res.data)
         } else {
           const msg = (res.data && res.data.message) || '请求失败'
           wx.showToast({ title: msg, icon: 'none', duration: 2000 })
@@ -59,6 +67,32 @@ const getTodayPraise = () => request('/recommend/today-praise')
  * @param {number} userId
  */
 const getGuessLike = (userId) => request('/recommend/guess-like', 'GET', { userId })
+
+// ==================== 认证接口 ====================
+
+/**
+ * 微信登录
+ * @param {string} code - wx.login 返回的 code
+ */
+const login = (code) => request('/login', 'POST', { code })
+
+/**
+ * 退出登录
+ */
+const logout = () => request('/logout', 'POST')
+
+/**
+ * 获取个人信息
+ * @param {number} userId
+ */
+const getProfile = (userId) => request(`/profile?userId=${userId}`)
+
+/**
+ * 更新个人信息
+ * @param {number} userId
+ * @param {object} data  { username, avatar }
+ */
+const updateProfile = (userId, data) => request('/profile', 'PUT', { userId, ...data })
 
 // ==================== 收藏接口 ====================
 
@@ -132,6 +166,10 @@ const getDishList = (params = {}) => {
 
 module.exports = {
   request,
+  login,
+  logout,
+  getProfile,
+  updateProfile,
   getRandomDish,
   getTodayPraise,
   getGuessLike,

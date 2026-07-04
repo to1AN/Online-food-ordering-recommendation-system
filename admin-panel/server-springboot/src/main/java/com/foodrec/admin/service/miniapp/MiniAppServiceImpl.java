@@ -114,8 +114,11 @@ public class MiniAppServiceImpl implements MiniAppService {
         Set<String> preferredCategories = new LinkedHashSet<>();
         for (SelectionHistory h : recentHistories) {
             triedDishIds.add(h.getDishId());
-            Dish dish = dishMapper.selectById(h.getDishId());
-            if (dish != null) {
+        }
+        // Batch load dishes to avoid N+1
+        if (!triedDishIds.isEmpty()) {
+            List<Dish> dishes = dishMapper.selectBatchIds(new ArrayList<>(triedDishIds));
+            for (Dish dish : dishes) {
                 preferredCategories.add(dish.getCategory());
             }
         }
@@ -124,10 +127,14 @@ public class MiniAppServiceImpl implements MiniAppService {
         LambdaQueryWrapper<Favorite> fqw = new LambdaQueryWrapper<>();
         fqw.eq(Favorite::getUserId, userId);
         List<Favorite> favs = favoriteMapper.selectList(fqw);
+        Set<Long> favDishIds = new HashSet<>();
         for (Favorite f : favs) {
             triedDishIds.add(f.getDishId());
-            Dish dish = dishMapper.selectById(f.getDishId());
-            if (dish != null) {
+            favDishIds.add(f.getDishId());
+        }
+        if (!favDishIds.isEmpty()) {
+            List<Dish> dishes = dishMapper.selectBatchIds(new ArrayList<>(favDishIds));
+            for (Dish dish : dishes) {
                 preferredCategories.add(dish.getCategory());
             }
         }

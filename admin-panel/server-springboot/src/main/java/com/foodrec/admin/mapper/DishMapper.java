@@ -24,10 +24,14 @@ public interface DishMapper extends BaseMapper<Dish> {
             "<if test='category != null and category != \"\"'>" +
             "AND d.category = #{category} " +
             "</if>" +
+            "<if test='status != null and status != \"\"'>" +
+            "AND d.status = #{status} " +
+            "</if>" +
             "ORDER BY d.dish_id LIMIT #{offset}, #{limit}" +
             "</script>")
     List<Map<String, Object>> selectDishWithStall(@Param("keyword") String keyword,
                                                     @Param("category") String category,
+                                                    @Param("status") String status,
                                                     @Param("offset") int offset,
                                                     @Param("limit") int limit);
 
@@ -40,8 +44,11 @@ public interface DishMapper extends BaseMapper<Dish> {
             "<if test='category != null and category != \"\"'>" +
             "AND d.category = #{category} " +
             "</if>" +
+            "<if test='status != null and status != \"\"'>" +
+            "AND d.status = #{status} " +
+            "</if>" +
             "</script>")
-    long countDishWithStall(@Param("keyword") String keyword, @Param("category") String category);
+    long countDishWithStall(@Param("keyword") String keyword, @Param("category") String category, @Param("status") String status);
 
     /** 随机获取一道菜品 */
     @Select("SELECT * FROM dish ORDER BY RAND() LIMIT 1")

@@ -73,11 +73,12 @@ public class MerchantController {
     public Result<Map<String, Object>> getDishes(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String category,
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "12") int pageSize) {
         return Result.ok(Map.of(
-            "list", adminService.getDishList(keyword, category, page, pageSize),
-            "total", adminService.getDishCount(keyword, category)
+            "list", adminService.getDishList(keyword, category, status, page, pageSize),
+            "total", adminService.getDishCount(keyword, category, status)
         ));
     }
 
@@ -114,6 +115,18 @@ public class MerchantController {
         return adminService.deleteDish(id)
             ? Result.ok("删除成功")
             : Result.fail("删除失败");
+    }
+
+    @PutMapping("/dishes/{id}/audit")
+    public Result<String> auditDish(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String status = body.get("status");
+        if (status == null || (!status.equals("approved") && !status.equals("rejected"))) {
+            return Result.fail("无效的状态值，需为 approved/rejected");
+        }
+        String reason = body.getOrDefault("reason", "");
+        return adminService.auditDish(id, status, reason)
+                ? Result.ok("审核完成")
+                : Result.fail("审核失败");
     }
 
     // ==================== 菜品统计与状态 ====================

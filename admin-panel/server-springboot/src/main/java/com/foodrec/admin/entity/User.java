@@ -15,6 +15,7 @@ public class User {
     private String password;
     private String avatar;
     private String openid;        // 微信 openid，用于小程序登录
+    private Integer status;       // 1=正常, 0=禁用
     private LocalDateTime registerTime;
 }
 

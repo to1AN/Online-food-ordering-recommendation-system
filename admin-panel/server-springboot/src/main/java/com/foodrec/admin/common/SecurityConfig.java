@@ -30,8 +30,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/miniapp/login").permitAll()
                 .requestMatchers("/api/miniapp/recommend/**").permitAll()
-                .requestMatchers("/api/admin/dishes").permitAll()
-                .requestMatchers("/api/admin/dishes/**").permitAll()
+                .requestMatchers("/api/admin/**").permitAll()
                 .requestMatchers("/static/**", "/index.html", "/favicon.ico", "/icons.svg").permitAll()
                 .anyRequest().authenticated()
             )

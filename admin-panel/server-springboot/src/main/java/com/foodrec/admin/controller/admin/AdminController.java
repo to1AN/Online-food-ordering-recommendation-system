@@ -2,6 +2,7 @@ package com.foodrec.admin.controller.admin;
 
 import com.foodrec.admin.common.Result;
 import com.foodrec.admin.entity.Merchant;
+import com.foodrec.admin.entity.User;
 import com.foodrec.admin.service.AdminService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,10 +50,47 @@ public class AdminController {
         ));
     }
 
+    @PostMapping("/users")
+    public Result<String> addUser(@Valid @RequestBody User user) {
+        return adminService.addUser(user)
+            ? Result.ok("添加成功")
+            : Result.fail("添加失败");
+    }
+
+    @PutMapping("/users/{id}")
+    public Result<String> updateUser(@PathVariable Long id, @Valid @RequestBody User user) {
+        user.setUserId(id);
+        return adminService.updateUser(user)
+            ? Result.ok("更新成功")
+            : Result.fail("更新失败");
+    }
+
+    @PutMapping("/users/{id}/status")
+    public Result<String> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
+        Integer status = body.get("status");
+        if (status == null || (status != 0 && status != 1)) {
+            return Result.fail("无效的状态值");
+        }
+        return adminService.updateUserStatus(id, status)
+            ? Result.ok("状态更新成功")
+            : Result.fail("状态更新失败");
+    }
+
     @DeleteMapping("/users/{id}")
     public Result<String> deleteUser(@PathVariable Long id) {
         return adminService.deleteUser(id)
             ? Result.ok("删除成功")
+            : Result.fail("删除失败");
+    }
+
+    @PostMapping("/users/batch-delete")
+    public Result<String> batchDeleteUsers(@RequestBody Map<String, List<Long>> body) {
+        List<Long> ids = body.get("ids");
+        if (ids == null || ids.isEmpty()) {
+            return Result.fail("请选择要删除的用户");
+        }
+        return adminService.batchDeleteUsers(ids)
+            ? Result.ok("已删除 " + ids.size() + " 个用户")
             : Result.fail("删除失败");
     }
 
@@ -134,7 +172,16 @@ public class AdminController {
         return Result.ok(adminService.deleteBackup(id));
     }
 
-    // ==================== 导出、通知、备份下载 ====================
+    @DeleteMapping("/backups/cleanup")
+    public Result<String> cleanupBackups(@RequestParam(defaultValue = "7") int retention) {
+        return Result.ok(adminService.cleanupBackups(retention));
+    }
+
+    // ==================== 系统日志 ====================
+    @GetMapping("/logs")
+    public Result<List<Map<String, Object>>> getSystemLogs(@RequestParam(defaultValue = "20") int limit) {
+        return Result.ok(adminService.getSystemLogs(limit));
+    }
     @GetMapping("/export/{type}")
     public ResponseEntity<byte[]> exportCsv(@PathVariable String type) throws IOException {
         byte[] data = adminService.exportCsv(type);

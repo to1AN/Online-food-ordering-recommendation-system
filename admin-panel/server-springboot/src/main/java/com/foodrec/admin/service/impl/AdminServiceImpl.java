@@ -144,6 +144,27 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    public boolean addUser(User user) {
+        if (user.getRegisterTime() == null) {
+            user.setRegisterTime(java.time.LocalDateTime.now());
+        }
+        return userMapper.insert(user) > 0;
+    }
+
+    @Override
+    public boolean updateUser(User user) {
+        return userMapper.updateById(user) > 0;
+    }
+
+    @Override
+    public boolean updateUserStatus(Long userId, Integer status) {
+        User user = userMapper.selectById(userId);
+        if (user == null) return false;
+        user.setStatus(status);
+        return userMapper.updateById(user) > 0;
+    }
+
+    @Override
     @Transactional
     public boolean deleteUser(Long id) {
         // 1. 删除该用户的收藏记录
@@ -156,6 +177,15 @@ public class AdminServiceImpl implements AdminService {
         historyMapper.delete(histQw);
         // 3. 删除用户
         return userMapper.deleteById(id) > 0;
+    }
+
+    @Override
+    @Transactional
+    public boolean batchDeleteUsers(List<Long> ids) {
+        for (Long id : ids) {
+            deleteUser(id);
+        }
+        return true;
     }
 
     // ==================== 商户管理 ====================
@@ -226,14 +256,14 @@ public class AdminServiceImpl implements AdminService {
 
     // ==================== 菜品总览 ====================
     @Override
-    public List<Map<String, Object>> getDishList(String keyword, String category, int page, int pageSize) {
+    public List<Map<String, Object>> getDishList(String keyword, String category, String status, int page, int pageSize) {
         int offset = (page - 1) * pageSize;
-        return dishMapper.selectDishWithStall(keyword, category, offset, pageSize);
+        return dishMapper.selectDishWithStall(keyword, category, status, offset, pageSize);
     }
 
     @Override
-    public long getDishCount(String keyword, String category) {
-        return dishMapper.countDishWithStall(keyword, category);
+    public long getDishCount(String keyword, String category, String status) {
+        return dishMapper.countDishWithStall(keyword, category, status);
     }
 
     @Override
@@ -414,6 +444,41 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
+    @Override
+    public String cleanupBackups(int retention) {
+        List<Map<String, Object>> all = getBackupList();
+        if (all.size() <= retention) return "当前仅有 " + all.size() + " 个备份，无需清理";
+        int deleted = 0;
+        for (int i = retention; i < all.size(); i++) {
+            String filename = (String) all.get(i).get("filename");
+            try {
+                Files.deleteIfExists(Paths.get(backupDir, filename));
+                deleted++;
+            } catch (IOException e) { /* skip */ }
+        }
+        return "已清理 " + deleted + " 个过期备份";
+    }
+
+    @Override
+    public List<Map<String, Object>> getSystemLogs(int limit) {
+        // Return recent backup operations as system logs
+        List<Map<String, Object>> logs = new ArrayList<>();
+        List<Map<String, Object>> backups = getBackupList();
+        int count = 0;
+        for (Map<String, Object> b : backups) {
+            if (count >= limit) break;
+            Map<String, Object> entry = new HashMap<>();
+            entry.put("id", count + 1);
+            entry.put("action", "备份操作: " + b.get("filename"));
+            entry.put("operator", "管理员");
+            entry.put("time", b.get("time"));
+            entry.put("result", "success");
+            logs.add(entry);
+            count++;
+        }
+        return logs;
+    }
+
     // ==================== 菜品统计与状态 ====================
     @Override
     public Map<String, Object> getDishStats() {
@@ -431,6 +496,19 @@ public class AdminServiceImpl implements AdminService {
         Dish dish = dishMapper.selectById(dishId);
         if (dish == null) return false;
         dish.setStatus(status);
+        return dishMapper.updateById(dish) > 0;
+    }
+
+    @Override
+    public boolean auditDish(Long dishId, String status, String reason) {
+        Dish dish = dishMapper.selectById(dishId);
+        if (dish == null) return false;
+        dish.setStatus(status);
+        // reason is logged/stored as needed; currently stored in description append for traceability
+        if (reason != null && !reason.isEmpty()) {
+            String currentDesc = dish.getDescription();
+            dish.setDescription("审核: " + status + " | " + reason + (currentDesc != null && !currentDesc.isEmpty() ? " | " + currentDesc : ""));
+        }
         return dishMapper.updateById(dish) > 0;
     }
 

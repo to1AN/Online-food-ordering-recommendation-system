@@ -17,7 +17,11 @@ public interface AdminService {
     // ==================== 用户管理 ====================
     List<User> getUserList(String keyword, int page, int pageSize);
     long getUserCount(String keyword);
+    boolean addUser(User user);
+    boolean updateUser(User user);
+    boolean updateUserStatus(Long userId, Integer status);
     boolean deleteUser(Long id);
+    boolean batchDeleteUsers(List<Long> ids);
 
     // ==================== 商户管理 ====================
     List<Merchant> getMerchantList(String keyword, int page, int pageSize);
@@ -35,8 +39,8 @@ public interface AdminService {
     List<Map<String, Object>> getStallDishes(Long stallId, int page, int pageSize);
 
     // ==================== 菜品总览 ====================
-    List<Map<String, Object>> getDishList(String keyword, String category, int page, int pageSize);
-    long getDishCount(String keyword, String category);
+    List<Map<String, Object>> getDishList(String keyword, String category, String status, int page, int pageSize);
+    long getDishCount(String keyword, String category, String status);
     Dish getDishById(Long id);
     boolean addDish(Dish dish);
     boolean updateDish(Dish dish);
@@ -53,10 +57,15 @@ public interface AdminService {
     String createBackup();
     String restoreBackup(Long id);
     String deleteBackup(Long id);
+    String cleanupBackups(int retention);
+
+    // ==================== 系统日志 ====================
+    List<Map<String, Object>> getSystemLogs(int limit);
 
     // ==================== 菜品统计与状态 ====================
     Map<String, Object> getDishStats();
     boolean updateDishStatus(Long dishId, String status);
+    boolean auditDish(Long dishId, String status, String reason);
 
     // ==================== 导出、通知、备份下载 ====================
     byte[] exportCsv(String type) throws IOException;

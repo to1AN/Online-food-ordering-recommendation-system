@@ -198,7 +198,7 @@ const handleView = async (row) => {
   loadingDishes.value = true
   try {
     const res = await api.getStallDishes(row.stall_id)
-    if (res.code === 200) stallDishes.value = res.data
+    if (res.code === 200) stallDishes.value = res.data.list || []
   } catch { stallDishes.value = [] }
   finally { loadingDishes.value = false }
 }
